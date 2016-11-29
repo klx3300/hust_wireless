@@ -18,6 +18,7 @@ options = [
     (('-u', '--username'), {'metavar': 'username'}),
     (('-p', '--password'), {'metavar': 'password'}),
     (('-c', '--config'), {'metavar': 'configure file'}),
+    (('-l', '--logout'), {'action': 'store_true','help': 'logout'}),
     (('-q', '--quiet'), {
         'action': 'store_true',
         'help': "don't print to stdout"}),
@@ -38,7 +39,7 @@ if result.text.find('eportal') != -1:
         input = raw_input
     except NameError:
         pass
-    if not (args.username):
+    if args.config:
         with open(args.config,'r') as f:
             cc=f.read()
         ccc=json.loads(cc)
@@ -70,6 +71,17 @@ if result.text.find('eportal') != -1:
         print('Authentication Succeed.')
 
 elif result.text.find('baidu') != -1:
-    print('Already Online.')
+    if not(args.logout):
+        print('Already Online.')
+    else:
+        url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=logout'
+        repdt = requests.request('POST',url)
+        repdt.encoding = 'UTF-8'
+        res_data = repdt.json()
+
+        if res_data['result'] != 'success':
+            print('Logout Failed. Error Message:\n',res_data['message']);
+        else:
+            print('Logout Succeed.')
 else:
     print("Opps, something goes wrong!")

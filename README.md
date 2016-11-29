@@ -18,3 +18,6 @@ USAGE
 
     hust_wireless.py -c <configure_file>
     (configure file examples are given as 'example.json')
+
+    hust_wireless.py -l
+    (logout)

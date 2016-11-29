@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals  # noqa
 
@@ -7,6 +7,7 @@ import sys
 import argparse
 import getpass
 import requests
+import json
 
 
 parser = argparse.ArgumentParser(
@@ -16,6 +17,7 @@ parser = argparse.ArgumentParser(
 options = [
     (('-u', '--username'), {'metavar': 'username'}),
     (('-p', '--password'), {'metavar': 'password'}),
+    (('-c', '--config'), {'metavar': 'configure file'}),
     (('-q', '--quiet'), {
         'action': 'store_true',
         'help': "don't print to stdout"}),
@@ -28,7 +30,7 @@ args = parser.parse_args()
 try:
     result = requests.get('http://www.baidu.com')
 except Exception:
-    print('Failed to connecte test webside!')
+    print('Failed to connect test website!')
     sys.exit()
 
 if result.text.find('eportal') != -1:
@@ -36,8 +38,15 @@ if result.text.find('eportal') != -1:
         input = raw_input
     except NameError:
         pass
-    username = args.username if args.username else input('Username: ')
-    password = args.password if args.password else getpass.getpass()
+    if not (args.username):
+        with open(args.config,'r') as f:
+            cc=f.read()
+        ccc=json.loads(cc)
+        username=ccc['username']
+        password=ccc['password']
+    else:
+        username = args.username if args.username else input('Username: ')
+        password = args.password if args.password else getpass.getpass()
 
     pattarn = re.compile(r"href=.*?\?(.*?)'")
     query_str = pattarn.findall(result.text)
@@ -58,9 +67,9 @@ if result.text.find('eportal') != -1:
     if res_json['result'] == 'fail':
         print(res_json['message'])
     else:
-        print('认证成功')
+        print('Authentication Succeed.')
 
 elif result.text.find('baidu') != -1:
-    print('已在线')
+    print('Already Online.')
 else:
     print("Opps, something goes wrong!")

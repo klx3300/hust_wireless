@@ -8,6 +8,8 @@ import argparse
 import getpass
 import requests
 import json
+import time
+import os
 
 
 parser = argparse.ArgumentParser(
@@ -18,7 +20,9 @@ options = [
     (('-u', '--username'), {'metavar': 'username'}),
     (('-p', '--password'), {'metavar': 'password'}),
     (('-c', '--config'), {'metavar': 'configure file'}),
-    (('-l', '--logout'), {'action': 'store_true','help': 'logout'}),
+    (('-d', '--daemon'),
+     {'action': 'store_true', 'help': 'run consistently and auto re-login on logout'}),
+    (('-l', '--logout'), {'action': 'store_true', 'help': 'logout'}),
     (('-q', '--quiet'), {
         'action': 'store_true',
         'help': "don't print to stdout"}),
@@ -27,61 +31,76 @@ for args, kwargs in options:
     parser.add_argument(*args, **kwargs)
 args = parser.parse_args()
 
+flag_daemon = True
 
-try:
-    result = requests.get('http://www.baidu.com')
-except Exception:
-    print('Failed to connect test website!')
-    sys.exit()
-
-if result.text.find('eportal') != -1:
+while flag_daemon:
+    if not args.daemon:
+        flag_daemon = False
     try:
-        input = raw_input
-    except NameError:
-        pass
-    if args.config:
-        with open(args.config,'r') as f:
-            cc=f.read()
-        ccc=json.loads(cc)
-        username=ccc['username']
-        password=ccc['password']
-    else:
-        username = args.username if args.username else input('Username: ')
-        password = args.password if args.password else getpass.getpass()
+        result = requests.get('http://www.baidu.com')
+    except Exception:
+        print('[' + time.ctime() + '] Failed to connect test website!')
+        sys.exit()
 
-    pattarn = re.compile(r"href=.*?\?(.*?)'")
-    query_str = pattarn.findall(result.text)
+    if result.text.find('eportal') != -1:
+        try:
+            input = raw_input
+        except NameError:
+            pass
+        if not args.logout:
+            if args.config:
+                with open(args.config, 'r') as f:
+                    cc = f.read()
+                ccc = json.loads(cc)
+                username = ccc['username']
+                password = ccc['password']
+            else:
+                username = args.username if args.username else input(
+                    'Username: ')
+                password = args.password if args.password else getpass.getpass()
 
-    url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=login'
-    post_data = {
-        'userId': username,
-        'password': password,
-        'queryString': query_str,
-        'service': '',
-        'operatorPwd': '',
-        'validcode': '',
-    }
-    responce = requests.request('POST', url, data=post_data)
-    responce.encoding = 'UTF-8'
-    res_json = responce.json()
+        pattarn = re.compile(r"href=.*?\?(.*?)'")
+        query_str = pattarn.findall(result.text)
 
-    if res_json['result'] == 'fail':
-        print(res_json['message'])
-    else:
-        print('Authentication Succeed.')
+        url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=login'
+        post_data = {
+            'userId': username,
+            'password': password,
+            'queryString': query_str,
+            'service': '',
+            'operatorPwd': '',
+            'validcode': '',
+        }
+        responce = requests.request('POST', url, data=post_data)
+        responce.encoding = 'UTF-8'
+        res_json = responce.json()
 
-elif result.text.find('baidu') != -1:
-    if not(args.logout):
-        print('Already Online.')
-    else:
-        url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=logout'
-        repdt = requests.request('POST',url)
-        repdt.encoding = 'UTF-8'
-        res_data = repdt.json()
-
-        if res_data['result'] != 'success':
-            print('Logout Failed. Error Message:\n',res_data['message']);
+        if res_json['result'] == 'fail':
+            print(res_json['message'])
         else:
-            print('Logout Succeed.')
-else:
-    print("Opps, something goes wrong!")
+            print('[' + time.ctime() + '] Authentication Succeed.')
+
+    elif result.text.find('baidu') != -1:
+        if not(args.logout):
+            print('[' + time.ctime() + '] Already Online.')
+        else:
+            url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=logout'
+            repdt = requests.request('POST', url)
+            repdt.encoding = 'UTF-8'
+            res_data = repdt.json()
+
+            if res_data['result'] != 'success':
+                print(
+                    '[' + time.ctime() + '] Logout Failed. Error Message:\n', res_data['message'])
+            else:
+                print('[' + time.ctime() + '] Logout Succeed.')
+    else:
+        print('[' + time.ctime + "] Opps, something goes wrong!")
+
+    while flag_daemon:
+        baidustat = os.system("ping -c 1 www.baidu.com > /dev/null 2>&1")
+        if baidustat != 0:
+            print('[' + time.ctime() + '] Disconnected.')
+            break
+        else:
+            time.sleep(2)

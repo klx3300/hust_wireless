@@ -11,7 +11,6 @@ import json
 import time
 import os
 
-
 parser = argparse.ArgumentParser(
     description='Login in HUST_WIRELESS without web browsers')
 
@@ -33,13 +32,28 @@ args = parser.parse_args()
 
 flag_daemon = True
 
+pid = 1
+
+
+def cond_print(text):
+    if not args.quiet:
+        print(text)
+
 while flag_daemon:
     if not args.daemon:
         flag_daemon = False
+    else:
+        if pid:
+            pid = os.fork()
+            if pid:
+                cond_print(
+                    '[' + time.ctime() + '] Process forked to background.')
+                exit()
+
     try:
         result = requests.get('http://www.baidu.com')
     except Exception:
-        print('[' + time.ctime() + '] Failed to connect test website!')
+        cond_print('[' + time.ctime() + '] Failed to connect test website!')
         sys.exit()
 
     if result.text.find('eportal') != -1:
@@ -76,13 +90,13 @@ while flag_daemon:
         res_json = responce.json()
 
         if res_json['result'] == 'fail':
-            print(res_json['message'])
+            cond_print(res_json['message'])
         else:
-            print('[' + time.ctime() + '] Authentication Succeed.')
+            cond_print('[' + time.ctime() + '] Authentication Succeed.')
 
     elif result.text.find('baidu') != -1:
         if not(args.logout):
-            print('[' + time.ctime() + '] Already Online.')
+            cond_print('[' + time.ctime() + '] Already Online.')
         else:
             url = 'http://192.168.50.3:8080/eportal/InterFace.do?method=logout'
             repdt = requests.request('POST', url)
@@ -90,17 +104,17 @@ while flag_daemon:
             res_data = repdt.json()
 
             if res_data['result'] != 'success':
-                print(
+                cond_print(
                     '[' + time.ctime() + '] Logout Failed. Error Message:\n', res_data['message'])
             else:
-                print('[' + time.ctime() + '] Logout Succeed.')
+                cond_print('[' + time.ctime() + '] Logout Succeed.')
     else:
-        print('[' + time.ctime + "] Opps, something goes wrong!")
+        cond_print('[' + time.ctime + "] Opps, something goes wrong!")
 
     while flag_daemon:
-        baidustat = os.system("ping -c 1 www.baidu.com > /dev/null 2>&1")
+        baidustat = os.system("ping -c 2 www.baidu.com > /dev/null 2>&1")
         if baidustat != 0:
-            print('[' + time.ctime() + '] Disconnected.')
+            cond_print('[' + time.ctime() + '] Disconnected.')
             break
         else:
             time.sleep(2)

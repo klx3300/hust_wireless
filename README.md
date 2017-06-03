@@ -19,5 +19,8 @@ USAGE
     hust_wireless.py -c <configure_file>
     (configure file examples are given as 'example.json')
 
+    (the two sample usages above can be run as daemon mode with option -d)
+    (try --help for more detailed descriptions.)
+
     hust_wireless.py -l
     (logout)

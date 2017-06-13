@@ -54,7 +54,7 @@ while flag_daemon:
         result = requests.get('http://www.baidu.com')
     except Exception:
         cond_print('[' + time.ctime() + '] Failed to connect test website!')
-        sys.exit()
+        continue
 
     if result.text.find('eportal') != -1:
         try:
@@ -105,7 +105,7 @@ while flag_daemon:
 
             if res_data['result'] != 'success':
                 cond_print(
-                    '[' + time.ctime() + '] Logout Failed. Error Message:\n', res_data['message'])
+                    '[' + time.ctime() + '] Logout Failed. Error Message:\n ' + res_data['message'])
             else:
                 cond_print('[' + time.ctime() + '] Logout Succeed.')
     else:

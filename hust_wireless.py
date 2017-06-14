@@ -54,6 +54,7 @@ while flag_daemon:
         result = requests.get('http://www.baidu.com')
     except Exception:
         cond_print('[' + time.ctime() + '] Failed to connect test website!')
+        time.sleep(2)
         continue
 
     if result.text.find('eportal') != -1:

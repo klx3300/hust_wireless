@@ -107,10 +107,13 @@ while flag_daemon:
             if res_data['result'] != 'success':
                 cond_print(
                     '[' + time.ctime() + '] Logout Failed. Error Message:\n ' + res_data['message'])
+                exit()
             else:
                 cond_print('[' + time.ctime() + '] Logout Succeed.')
+                exit()
     else:
         cond_print('[' + time.ctime + "] Opps, something goes wrong!")
+        exit()
 
     while flag_daemon:
         baidustat = os.system("ping -c 2 www.baidu.com > /dev/null 2>&1")
